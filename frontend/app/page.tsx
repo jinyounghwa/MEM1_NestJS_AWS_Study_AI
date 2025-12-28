@@ -1,19 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatInterface from '@/components/ChatInterface'
 import Sidebar from '@/components/Sidebar'
 
+interface InitialMessage {
+  sessionId: string
+  message: string
+}
+
 export default function Home() {
   const [started, setStarted] = useState(false)
-  const [userId, setUserIdInput] = useState('')
+  const [userId, setUserId] = useState<string>('')
   const [topics, setTopics] = useState('')
   const [loading, setLoading] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string>()
+  const [initialMessage, setInitialMessage] = useState<InitialMessage | null>(null)
+
+  // Initialize or retrieve userId from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('tutorUserId')
+    if (stored) {
+      setUserId(stored)
+    } else {
+      const generated = `user-${Date.now()}`
+      localStorage.setItem('tutorUserId', generated)
+      setUserId(generated)
+    }
+  }, [])
 
   const handleStart = async () => {
-    if (!userId.trim() || !topics.trim()) {
-      alert('사용자 ID와 학습 주제를 입력해주세요.')
+    if (!topics.trim()) {
+      alert('학습 주제를 입력해주세요.')
       return
     }
 
@@ -30,6 +48,10 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json()
         setCurrentSessionId(data.sessionId)
+        setInitialMessage({
+          sessionId: data.sessionId,
+          message: data.initialMessage,
+        })
         setStarted(true)
       } else {
         alert('학습 시작 실패. 백엔드가 실행 중인지 확인하세요.')
@@ -65,7 +87,7 @@ export default function Home() {
     setTopics('')
   }
 
-  if (started && userId) {
+  if (started && userId && currentSessionId) {
     return (
       <>
         <Sidebar
@@ -74,8 +96,24 @@ export default function Home() {
           onSessionSelect={handleSessionSelect}
           onNewSession={handleNewSession}
         />
-        <ChatInterface userId={userId} sessionId={currentSessionId} />
+        <ChatInterface
+          userId={userId}
+          sessionId={currentSessionId}
+          initialMessage={initialMessage?.message}
+        />
       </>
+    )
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">학습 시작 중...</h2>
+          <p className="text-gray-600">AI가 첫 번째 설명을 준비하고 있습니다</p>
+        </div>
+      </main>
     )
   }
 
@@ -90,17 +128,11 @@ export default function Home() {
         </div>
 
         <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              👤 사용자 ID
-            </label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserIdInput(e.target.value)}
-              placeholder="예: student-001"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <p className="text-sm text-green-800">
+              ✅ <span className="font-semibold">자동 사용자 ID:</span> {userId}
+            </p>
+            <p className="text-xs text-green-700 mt-1">세션 재개 시 이 ID로 자동 식별됩니다</p>
           </div>
 
           <div>
@@ -131,10 +163,10 @@ export default function Home() {
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-semibold text-gray-800 mb-2">📖 사용 방법:</h3>
           <ol className="text-sm text-gray-700 space-y-1">
-            <li>1. 사용자 ID를 입력하세요</li>
-            <li>2. 학습할 주제를 입력하세요 (쉼표로 구분)</li>
-            <li>3. 학습 시작 버튼을 클릭하세요</li>
-            <li>4. AI의 설명을 듣고 &lt;IS&gt;요약&lt;/IS&gt; 태그로 요약하세요</li>
+            <li>1. 학습할 주제를 입력하세요 (쉼표로 구분)</li>
+            <li>2. 학습 시작 버튼을 클릭하세요</li>
+            <li>3. AI의 설명을 듣고 &lt;IS&gt;요약&lt;/IS&gt; 태그로 요약하세요</li>
+            <li>4. "다음 주제"라고 입력하면 다음 주제로 진행합니다</li>
             <li>5. 완료 후 마크다운 파일로 내보낼 수 있습니다</li>
           </ol>
         </div>

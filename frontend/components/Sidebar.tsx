@@ -52,6 +52,27 @@ export default function Sidebar({ userId, currentSessionId, onSessionSelect, onN
     setIsOpen(false)
   }
 
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+    e.stopPropagation()
+
+    // 삭제 확인
+    if (!confirm('이 세션을 삭제하시겠습니까? 저장된 모든 메시지가 삭제됩니다.')) {
+      return
+    }
+
+    try {
+      await axios.delete(`http://localhost:3001/api/nestjs-aws-learn/session/${sessionId}`, {
+        data: { userId },
+      })
+
+      // 세션 목록 새로고침
+      await fetchSessions()
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+      alert('세션 삭제에 실패했습니다.')
+    }
+  }
+
   return (
     <>
       {/* 햅버거 버튼 */}
@@ -120,37 +141,51 @@ export default function Sidebar({ userId, currentSessionId, onSessionSelect, onN
           ) : (
             <ul className="space-y-2 p-4">
               {sessions.map((session) => (
-                <li key={session.id}>
-                  <button
+                <li key={session.id} className="group">
+                  <div
                     onClick={() => handleSessionClick(session.id)}
-                    className={`w-full text-left p-3 rounded-lg transition ${
+                    className={`flex items-center justify-between p-3 rounded-lg transition cursor-pointer ${
                       currentSessionId === session.id
                         ? 'bg-blue-100 border-l-4 border-blue-500'
                         : 'hover:bg-gray-100'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">
-                          {session.currentTopic}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-1">
-                          {session.currentTopicIndex + 1}/{session.totalTopics}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          💬 {session.messageCount} 메시지
-                        </p>
-                      </div>
-                      <div className="text-right ml-2">
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                          {session.stepCount}단계
-                        </span>
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">
+                        {session.currentTopic}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {session.currentTopicIndex + 1}/{session.totalTopics}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        💬 {session.messageCount} 메시지
+                      </p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(session.createdAt).toLocaleDateString('ko-KR')}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {new Date(session.createdAt).toLocaleDateString('ko-KR')}
-                    </p>
-                  </button>
+
+                    {/* 삭제 버튼 - hover 시 표시 */}
+                    <button
+                      onClick={(e) => handleDeleteSession(e, session.id)}
+                      className="ml-2 p-2 text-red-500 hover:bg-red-100 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                      title="세션 삭제"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
