@@ -11,9 +11,10 @@ interface Message {
 
 interface ChatInterfaceProps {
   userId: string
+  sessionId?: string
 }
 
-export default function ChatInterface({ userId }: ChatInterfaceProps) {
+export default function ChatInterface({ userId, sessionId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -32,11 +33,36 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
   useEffect(() => {
     const initChat = async () => {
       try {
-        // AI의 초기 인사말 추가
+        if (sessionId) {
+          // 기존 세션의 메시지 로드
+          const response = await axios.get(
+            `http://localhost:3001/api/nestjs-aws-learn/session/${sessionId}/messages`
+          )
+
+          if (response.data.messages) {
+            const loadedMessages: Message[] = response.data.messages.map((msg: any) => ({
+              role: msg.role,
+              content: msg.content,
+              timestamp: new Date(msg.timestamp),
+            }))
+            setMessages(loadedMessages)
+          }
+        } else {
+          // 새 세션의 초기 인사말
+          setMessages([
+            {
+              role: 'assistant',
+              content: '안녕하세요! 📚 NestJS와 AWS 학습을 시작하겠습니다.\n\n먼저 학습 내용을 설명한 후, <IS>태그 안에 당신의 이해를 요약해주세요.\n\n준비되셨으면 "준비됐어" 또는 아무 메시지나 입력해주세요.',
+              timestamp: new Date(),
+            },
+          ])
+        }
+      } catch (error) {
+        console.error('Failed to load messages:', error)
         setMessages([
           {
             role: 'assistant',
-            content: '안녕하세요! 📚 NestJS와 AWS 학습을 시작하겠습니다.\n\n먼저 학습 내용을 설명한 후, <IS>태그 안에 당신의 이해를 요약해주세요.\n\n준비되셨으면 "준비됐어" 또는 아무 메시지나 입력해주세요.',
+            content: '안녕하세요! 📚 NestJS와 AWS 학습을 시작하겠습니다.\n\n먼저 학습 내용을 설명한 후, <IS>태그 안에 당신의 이해를 요약해주세요.',
             timestamp: new Date(),
           },
         ])
@@ -46,7 +72,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
     }
 
     initChat()
-  }, [userId])
+  }, [userId, sessionId])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,6 +92,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
     try {
       const response = await axios.post('http://localhost:3001/api/nestjs-aws-learn/chat', {
         userId,
+        sessionId,
         message: input,
       })
 

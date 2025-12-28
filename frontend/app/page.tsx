@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import ChatInterface from '@/components/ChatInterface'
+import Sidebar from '@/components/Sidebar'
 
 export default function Home() {
   const [started, setStarted] = useState(false)
   const [userId, setUserIdInput] = useState('')
   const [topics, setTopics] = useState('')
   const [loading, setLoading] = useState(false)
+  const [currentSessionId, setCurrentSessionId] = useState<string>()
 
   const handleStart = async () => {
     if (!userId.trim() || !topics.trim()) {
@@ -26,6 +28,8 @@ export default function Home() {
       })
 
       if (response.ok) {
+        const data = await response.json()
+        setCurrentSessionId(data.sessionId)
         setStarted(true)
       } else {
         alert('학습 시작 실패. 백엔드가 실행 중인지 확인하세요.')
@@ -37,8 +41,42 @@ export default function Home() {
     }
   }
 
-  if (started) {
-    return <ChatInterface userId={userId} />
+  const handleSessionSelect = async (sessionId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/nestjs-aws-learn/resume/${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+
+      if (response.ok) {
+        setCurrentSessionId(sessionId)
+      } else {
+        alert('세션 재개 실패')
+      }
+    } catch (error) {
+      alert('세션 재개 중 오류: ' + error)
+    }
+  }
+
+  const handleNewSession = () => {
+    setStarted(false)
+    setCurrentSessionId(undefined)
+    setTopics('')
+  }
+
+  if (started && userId) {
+    return (
+      <>
+        <Sidebar
+          userId={userId}
+          currentSessionId={currentSessionId}
+          onSessionSelect={handleSessionSelect}
+          onNewSession={handleNewSession}
+        />
+        <ChatInterface userId={userId} sessionId={currentSessionId} />
+      </>
+    )
   }
 
   return (
