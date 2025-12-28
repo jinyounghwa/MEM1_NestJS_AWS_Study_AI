@@ -1,0 +1,45 @@
+{
+  "name": "nestjs-aws-tutor-backend",
+  "version": "1.0.0",
+  "description": "NestJS + AWS Learning Tutor System with MLX and MEM1",
+  "author": "YoungHwa Jin",
+  "license": "MIT",
+  "main": "dist/main.js",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^3.0.1",
+    "@nestjs/common": "^11.1.10",
+    "@nestjs/core": "^11.1.10",
+    "@nestjs/platform-express": "^11.1.10",
+    "@nestjs/typeorm": "^11.0.0",
+    "axios": "^1.6.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "dotenv": "^17.2.3",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.1.13",
+    "rimraf": "^5.0.5",
+    "rxjs": "^7.8.1",
+    "ts-loader": "^9.5.4",
+    "typeorm": "^0.3.28",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "ts-node": "^10.9.2"
+  }
+}
